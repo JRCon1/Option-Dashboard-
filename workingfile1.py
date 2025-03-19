@@ -913,11 +913,32 @@ def get_options_dashboard():
 def update_current_price(ticker):
     if ticker:
         try:
-            ticker_obj = yf.Ticker(ticker)
-            price = ticker_obj.history(period="1d")['Close'].iloc[-1]
-            return f"${price:,.2f}"
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+            session = requests.Session()
+            session.headers.update(headers)
+            
+            # Create ticker object with custom session
+            ticker_obj = yf.Ticker(ticker, session=session)
+            
+            # Add retry logic
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    hist = ticker_obj.history(period="1d")
+                    if hist.empty:
+                        print(f"No data available for {ticker}")
+                        return "N/A"
+                    price = hist['Close'].iloc[-1]
+                    return f"${price:,.2f}"
+                except Exception as e:
+                    if attempt == max_retries - 1:
+                        print(f"Error getting price for {ticker} after {max_retries} attempts: {str(e)}")
+                        return "N/A"
+                    time.sleep(1)  # Wait before retrying
         except Exception as e:
-            print(f"Error getting price for {ticker}: {str(e)}")
+            print(f"Error initializing ticker {ticker}: {str(e)}")
             return "N/A"
     return "N/A"
 
