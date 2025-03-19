@@ -913,9 +913,11 @@ def get_options_dashboard():
 def update_current_price(ticker):
     if ticker:
         try:
-            price = yf.Ticker(ticker).history(period="1d")['Close'].iloc[-1]
+            ticker_obj = yf.Ticker(ticker)
+            price = ticker_obj.history(period="1d")['Close'].iloc[-1]
             return f"${price:,.2f}"
         except Exception as e:
+            print(f"Error getting price for {ticker}: {str(e)}")
             return "N/A"
     return "N/A"
 
@@ -1651,6 +1653,9 @@ def update_ic_expiry(ticker):
     if not ticker:
         return []
     try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
         ticker_obj = yf.Ticker(ticker)
         expiry_dates = ticker_obj.options
         return [{'label': date, 'value': date} for date in expiry_dates]
@@ -1669,8 +1674,11 @@ def update_ic_strikes(ticker, expiry):
     if not ticker or not expiry:
         return [], [], [], []
     try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
         ticker_obj = yf.Ticker(ticker)
-        current_price = ticker_obj.history(period="1d")['Close'].iloc[-1]
+        current_price = ticker_obj.history(period="1d", headers=headers)['Close'].iloc[-1]
         option_chain = ticker_obj.option_chain(expiry)
         
         # Get strikes around current price
@@ -1704,8 +1712,11 @@ def update_ic_analysis(ticker, expiry, short_call, long_call, short_put, long_pu
         return "Please select all strikes to analyze the strategy.", go.Figure()
     
     try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
         ticker_obj = yf.Ticker(ticker)
-        current_price = ticker_obj.history(period="1d")['Close'].iloc[-1]
+        current_price = ticker_obj.history(period="1d", headers=headers)['Close'].iloc[-1]
         option_chain = ticker_obj.option_chain(expiry)
         
         # Get option prices
@@ -1801,5 +1812,4 @@ def update_ic_analysis(ticker, expiry, short_call, long_call, short_put, long_pu
 # Run the App
 # ---------------------------
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 8080))
-    app.run_server(host='0.0.0.0', port=port, debug=True)
+    app.run_server(debug=True)
