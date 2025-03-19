@@ -13,6 +13,7 @@ from datetime import datetime
 import plotly.graph_objects as go  # Add this import at the top with other imports
 import io
 import time
+import requests
 
 # Define common styles
 COMMON_STYLES = {
